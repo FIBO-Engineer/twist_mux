@@ -38,6 +38,7 @@
 #include <rclcpp/rclcpp.hpp>
 #include <std_msgs/msg/bool.hpp>
 #include <geometry_msgs/msg/twist.hpp>
+#include <geometry_msgs/msg/twist_stamped.hpp>
 
 #include <list>
 #include <memory>
@@ -50,6 +51,7 @@ namespace twist_mux
 // Forwarding declarations:
 class TwistMuxDiagnostics;
 struct TwistMuxDiagnosticsStatus;
+template <typename T>
 class VelocityTopicHandle;
 class LockTopicHandle;
 
@@ -62,8 +64,11 @@ class TwistMux : public rclcpp::Node
 public:
   template<typename T>
   using handle_container = std::list<T>;
+  using velocity_handle_variant = std::variant<VelocityTopicHandle<geometry_msgs::msg::Twist>, VelocityTopicHandle<geometry_msgs::msg::TwistStamped>>;
+  using publisher_variant = std::variant<rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr, rclcpp::Publisher<geometry_msgs::msg::TwistStamped>::SharedPtr>;
+  using message_variant = std::variant<geometry_msgs::msg::Twist, geometry_msgs::msg::TwistStamped>;
 
-  using velocity_topic_container = handle_container<VelocityTopicHandle>;
+  using velocity_topic_container = handle_container<velocity_handle_variant>;
   using lock_topic_container = handle_container<LockTopicHandle>;
 
   TwistMux();
@@ -71,9 +76,12 @@ public:
 
   void init();
 
-  bool hasPriority(const VelocityTopicHandle & twist);
+  template <typename VelocityTopicHandleT>
+  bool hasPriority(const VelocityTopicHandleT & twist);
 
-  void publishTwist(const geometry_msgs::msg::Twist::ConstSharedPtr & msg);
+  
+  template <typename MessageConstSharedPtrT>
+  void publishTwist(const MessageConstSharedPtrT & msg);
 
   void updateDiagnostics();
 
@@ -94,9 +102,10 @@ protected:
   std::shared_ptr<velocity_topic_container> velocity_hs_;
   std::shared_ptr<lock_topic_container> lock_hs_;
 
-  rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr cmd_pub_;
+  publisher_variant cmd_pub_;
+  message_variant last_cmd_;
 
-  geometry_msgs::msg::Twist last_cmd_;
+  bool output_stamped;
 
   template<typename T>
   void getTopicHandles(const std::string & param_name, handle_container<T> & topic_hs);

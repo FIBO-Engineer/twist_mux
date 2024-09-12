@@ -39,6 +39,7 @@
 #include <rclcpp/rclcpp.hpp>
 #include <std_msgs/msg/bool.hpp>
 #include <geometry_msgs/msg/twist.hpp>
+#include <geometry_msgs/msg/twist_stamped.hpp>
 
 #include <twist_mux/utils.hpp>
 #include <twist_mux/twist_mux.hpp>
@@ -153,15 +154,22 @@ protected:
   T msg_;
 };
 
-class VelocityTopicHandle : public TopicHandle_<geometry_msgs::msg::Twist>
+template<typename T>
+class VelocityTopicHandle : public TopicHandle_<T>
 {
 private:
-  typedef TopicHandle_<geometry_msgs::msg::Twist> base_type;
+  typedef TopicHandle_<T> base_type;
 
   // https://index.ros.org/doc/ros2/About-Quality-of-Service-Settings
   // rmw_qos_profile_t twist_qos_profile = rmw_qos_profile_sensor_data;
 
 public:
+  using base_type::subscriber_;
+  using base_type::mux_;
+  using base_type::topic_;
+  using base_type::stamp_;
+  using base_type::msg_;
+
   typedef typename base_type::priority_type priority_type;
 
   VelocityTopicHandle(
@@ -169,10 +177,9 @@ public:
     priority_type priority, TwistMux * mux)
   : base_type(name, topic, timeout, priority, mux)
   {
-    subscriber_ = mux_->create_subscription<geometry_msgs::msg::Twist>(
+    subscriber_ = mux_->template create_subscription<T>(
       topic_, rclcpp::SystemDefaultsQoS(),
       std::bind(&VelocityTopicHandle::callback, this, std::placeholders::_1));
-
     // subscriber_ = nh_.create_subscription<geometry_msgs::msg::Twist>(
     //    topic_, twist_qos_profile,
     //  std::bind(&VelocityTopicHandle::callback, this, std::placeholders::_1));
@@ -181,10 +188,10 @@ public:
   bool isMasked(priority_type lock_priority) const
   {
     // std::cout << hasExpired() << " / " << (getPriority() < lock_priority) << std::endl;
-    return hasExpired() || (getPriority() < lock_priority);
+    return base_type::hasExpired() || (base_type::getPriority() < lock_priority);
   }
 
-  void callback(const geometry_msgs::msg::Twist::ConstSharedPtr msg)
+  void callback(const typename T::ConstSharedPtr msg)
   {
     stamp_ = mux_->now();
     msg_ = *msg;
@@ -193,8 +200,8 @@ public:
     // Note that we have to check all the locks because they might time out
     // and since we have several topics we must look for the highest one in
     // all the topic list; so far there's no O(1) solution.
-    if (mux_->hasPriority(*this)) {
-      mux_->publishTwist(msg);
+    if (mux_->template hasPriority(*this)) {
+      mux_->template publishTwist(msg);
     }
   }
 };
@@ -215,7 +222,7 @@ public:
     priority_type priority, TwistMux * mux)
   : base_type(name, topic, timeout, priority, mux)
   {
-    subscriber_ = mux_->create_subscription<std_msgs::msg::Bool>(
+    subscriber_ = mux_->template create_subscription<std_msgs::msg::Bool>(
       topic_, rclcpp::SystemDefaultsQoS(),
       std::bind(&LockTopicHandle::callback, this, std::placeholders::_1));
   }

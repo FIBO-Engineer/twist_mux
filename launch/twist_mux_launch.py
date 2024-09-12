@@ -49,16 +49,25 @@ def generate_launch_description():
             default_value='twist_mux/cmd_vel',
             description='cmd vel output topic'),
         DeclareLaunchArgument(
+            'cmd_vel_stamped_out',
+            default_value='twist_mux/cmd_vel_stamped_out',
+            description='cmd vel stamped output topic'),
+        DeclareLaunchArgument(
             'use_sim_time',
             default_value='False',
             description='Use simulation time'),
+        DeclareLaunchArgument(
+            'output_stamped',
+            default_value=False,
+            description='Output as geometry_msgs/TwistStamped instead of geometry_msgs/Twist'),
         Node(
             package='twist_mux',
             executable='twist_mux',
             output='screen',
             remappings={('/cmd_vel_out', LaunchConfiguration('cmd_vel_out'))},
             parameters=[
-                {'use_sim_time': LaunchConfiguration('use_sim_time')},
+                {'use_sim_time': LaunchConfiguration('use_sim_time'),
+                 'output_stamped': LaunchConfiguration('output_stamped')},
                 LaunchConfiguration('config_locks'),
                 LaunchConfiguration('config_topics')]
         ),
