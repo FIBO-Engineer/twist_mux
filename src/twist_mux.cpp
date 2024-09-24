@@ -82,9 +82,13 @@ void TwistMux::init()
   lock_hs_ = std::make_shared<lock_topic_container>();
   getTopicHandles("topics", *velocity_hs_);
   getTopicHandles("locks", *lock_hs_);
-
-  declare_parameter("output_stamped", false);
-  output_stamped = get_parameter("output_stamped").as_bool();
+  
+  try {
+    output_stamped = get_parameter("output_stamped").as_bool();
+  } catch (const rclcpp::exceptions::ParameterNotDeclaredException& e)
+  {
+    declare_parameter("output_stamped", false);
+  }
 
   /// Publisher for output topic:
   if (output_stamped) {
