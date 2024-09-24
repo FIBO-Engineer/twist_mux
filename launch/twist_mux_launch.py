@@ -57,7 +57,7 @@ def generate_launch_description():
             default_value='False',
             description='Use simulation time'),
         DeclareLaunchArgument(
-            'use_stamped',
+            'output_stamped',
             default_value=False,
             description='Output as geometry_msgs/TwistStamped instead of geometry_msgs/Twist'),
         Node(
@@ -67,7 +67,7 @@ def generate_launch_description():
             remappings={('/cmd_vel_out', LaunchConfiguration('cmd_vel_out'))},
             parameters=[
                 {'use_sim_time': LaunchConfiguration('use_sim_time'),
-                 'use_stamped': LaunchConfiguration('use_stamped')},
+                 'output_stamped': LaunchConfiguration('output_stamped')},
                 LaunchConfiguration('config_locks'),
                 LaunchConfiguration('config_topics')]
         ),
