@@ -205,9 +205,6 @@ class LockTopicHandle : public TopicHandle_<std_msgs::msg::Bool>
 private:
   typedef TopicHandle_<std_msgs::msg::Bool> base_type;
 
-  // https://index.ros.org/doc/ros2/About-Quality-of-Service-Settings
-  // rmw_qos_profile_t lock_qos_profile = rmw_qos_profile_sensor_data;
-
 public:
   typedef typename base_type::priority_type priority_type;
 
