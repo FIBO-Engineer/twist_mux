@@ -177,9 +177,6 @@ public:
     subscriber_ = mux_->template create_subscription<T>(
       topic_, rclcpp::SystemDefaultsQoS(),
       std::bind(&VelocityTopicHandle::callback, this, std::placeholders::_1));
-    // subscriber_ = nh_.create_subscription<geometry_msgs::msg::Twist>(
-    //    topic_, twist_qos_profile,
-    //  std::bind(&VelocityTopicHandle::callback, this, std::placeholders::_1));
   }
 
   bool isMasked(priority_type lock_priority) const
