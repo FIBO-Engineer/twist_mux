@@ -160,9 +160,6 @@ class VelocityTopicHandle : public TopicHandle_<T>
 private:
   typedef TopicHandle_<T> base_type;
 
-  // https://index.ros.org/doc/ros2/About-Quality-of-Service-Settings
-  // rmw_qos_profile_t twist_qos_profile = rmw_qos_profile_sensor_data;
-
 public:
   using base_type::subscriber_;
   using base_type::mux_;
