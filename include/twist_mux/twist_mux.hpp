@@ -51,8 +51,8 @@ namespace twist_mux
 // Forwarding declarations:
 class TwistMuxDiagnostics;
 struct TwistMuxDiagnosticsStatus;
+template <typename T>
 class VelocityTopicHandle;
-class VelocityStampedTopicHandle;
 class LockTopicHandle;
 
 /**
@@ -64,9 +64,11 @@ class TwistMux : public rclcpp::Node
 public:
   template<typename T>
   using handle_container = std::list<T>;
+  using velocity_handle_variant = std::variant<VelocityTopicHandle<geometry_msgs::msg::Twist>, VelocityTopicHandle<geometry_msgs::msg::TwistStamped>>;
+  using publisher_variant = std::variant<rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr, rclcpp::Publisher<geometry_msgs::msg::TwistStamped>::SharedPtr>;
+  using message_variant = std::variant<geometry_msgs::msg::Twist, geometry_msgs::msg::TwistStamped>;
 
-  using velocity_topic_container = handle_container<VelocityTopicHandle>;
-  using velocity_stamped_topic_container = handle_container<VelocityStampedTopicHandle>;
+  using velocity_topic_container = handle_container<velocity_handle_variant>;
   using lock_topic_container = handle_container<LockTopicHandle>;
 
   TwistMux();
@@ -74,13 +76,12 @@ public:
 
   void init();
 
-  bool hasPriority(const VelocityTopicHandle & twist);
+  template <typename VelocityTopicHandleT>
+  bool hasPriority(const VelocityTopicHandleT & twist);
 
-  bool hasPriorityStamped(const VelocityStampedTopicHandle & twist);
-
-  void publishTwist(const geometry_msgs::msg::Twist::ConstSharedPtr & msg);
-
-  void publishTwistStamped(const geometry_msgs::msg::TwistStamped::ConstSharedPtr & msg);
+  
+  template <typename MessageConstSharedPtrT>
+  void publishTwist(const MessageConstSharedPtrT & msg);
 
   void updateDiagnostics();
 
@@ -99,14 +100,12 @@ protected:
    * must reserve the number of handles initially.
    */
   std::shared_ptr<velocity_topic_container> velocity_hs_;
-  std::shared_ptr<velocity_stamped_topic_container> velocity_stamped_hs_;
   std::shared_ptr<lock_topic_container> lock_hs_;
 
-  rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr cmd_pub_;
-  rclcpp::Publisher<geometry_msgs::msg::TwistStamped>::SharedPtr cmd_pub_stamped_;
+  publisher_variant cmd_pub_;
+  message_variant last_cmd_;
 
-  geometry_msgs::msg::Twist last_cmd_;
-  geometry_msgs::msg::TwistStamped last_cmd_stamped_;
+  bool output_stamped;
 
   template<typename T>
   void getTopicHandles(const std::string & param_name, handle_container<T> & topic_hs);
